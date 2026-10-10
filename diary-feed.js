@@ -1,29 +1,44 @@
 export const owner = 'pha0028-a11y';
 export const repository = 'tracy-little-corner';
 export const marker = '<!-- tracy-diary:v1 -->';
+export function trusted(issue) { return !issue.pull_request && issue.user?.login === owner && issue.state === 'open'; }
 export function parseDiary(issue) {
-  if (issue.pull_request || issue.user?.login !== owner || issue.state !== 'open' || !issue.title?.startsWith('[Diary] ') || !issue.body?.startsWith(marker + '\n')) return null;
-  const match = issue.body.match(/^<!-- tracy-diary:v1 -->\r?\nDate: (\d{4}-\d{2}-\d{2})\r?\n\r?\n([\s\S]+)$/);
+  if (!trusted(issue) || !issue.title?.startsWith('[Diary] ')) return null;
+  const match = issue.body?.match(/^<!-- tracy-diary:v1 -->\r?\nDate: (\d{4}-\d{2}-\d{2})\r?\n\r?\n([\s\S]+)$/);
   if (!match || Number.isNaN(new Date(match[1] + 'T12:00:00').getTime())) return null;
   return { id: 'github-' + issue.number, date: match[1], title: issue.title.slice(8), body: match[2], url: 'https://github.com/' + owner + '/' + repository + '/issues/' + issue.number };
 }
-export async function loadDiary() {
-  const entries = [];
+export function parseFavourites(issue) {
+  if (!trusted(issue) || issue.title !== '[Favourites] My little world') return null;
+  const prefix = '<!-- tracy-favourites:v1 -->\n';
+  if (!issue.body?.startsWith(prefix)) return null;
+  try {
+    const data = JSON.parse(issue.body.slice(prefix.length));
+    if (!['music','joy','dream'].every(key => typeof data[key] === 'string' && data[key].length <= 180)) return null;
+    return { data, updatedAt: issue.updated_at || '', number: issue.number };
+  } catch { return null; }
+}
+export async function loadPublished() {
+  const entries = [], favourites = [];
   for (let page = 1; ; page++) {
     const url = new URL('https://api.github.com/repos/' + owner + '/' + repository + '/issues');
     url.search = new URLSearchParams({ creator: owner, state: 'open', per_page: '100', page: String(page) });
     const response = await fetch(url, { headers: { Accept: 'application/vnd.github+json' }, cache: 'no-store' });
-    if (!response.ok) throw new Error('Không tải được bài đã đăng. Vui lòng thử lại sau.');
+    if (!response.ok) throw new Error('Published updates could not load. Please try again later.');
     const issues = await response.json();
-    if (!Array.isArray(issues)) throw new Error('Không tải được bài đã đăng.');
-    entries.push(...issues.map(parseDiary).filter(Boolean));
+    if (!Array.isArray(issues)) throw new Error('Published updates could not load.');
+    for (const issue of issues) {
+      const entry = parseDiary(issue), favourite = parseFavourites(issue);
+      if (entry) entries.push(entry);
+      if (favourite) favourites.push(favourite);
+    }
     if (issues.length < 100) break;
   }
-  return entries.sort((a, b) => b.date.localeCompare(a.date));
+  favourites.sort((a,b) => b.updatedAt.localeCompare(a.updatedAt) || b.number-a.number);
+  return { entries: entries.sort((a,b) => b.date.localeCompare(a.date)), favourites: favourites[0]?.data || null };
 }
-export function makePost(date, title, body) {
-  return { title: '[Diary] ' + title.trim(), body: marker + '\nDate: ' + date + '\n\n' + body.trim() };
-}
+export async function loadDiary() { return (await loadPublished()).entries; }
+export function makePost(date, title, body) { return { title: '[Diary] ' + title.trim(), body: marker + '\nDate: ' + date + '\n\n' + body.trim() }; }
 export function postURL(post, includeBody = true) {
   const url = new URL('https://github.com/' + owner + '/' + repository + '/issues/new');
   url.searchParams.set('title', post.title);
