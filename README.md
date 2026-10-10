@@ -1,4 +1,4 @@
-# Tracy’s little corner
+# A little about me
 
 A personal website with a browser-local diary.
 
