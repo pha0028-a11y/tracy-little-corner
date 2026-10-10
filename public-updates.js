@@ -1,4 +1,5 @@
-import { loadPublished } from './diary-feed.js?v=2';
+import { renderMoments } from './moments.js?v=1';
+import { loadPublished } from './diary-feed.js?v=3';
 (() => {
   const list = document.querySelector('#diary-entries');
   fetch('updates.json', { cache: 'no-store' })
@@ -14,8 +15,9 @@ import { loadPublished } from './diary-feed.js?v=2';
       }
       if (!Array.isArray(data.entries)) throw new Error('Invalid entries');
       let online = [];
-      try { const published = await loadPublished(); online = published.entries; if (published.favourites) for (const key of ['music','joy','dream']) document.getElementById(key).textContent = published.favourites[key]; }
+      try { const published = await loadPublished(); online = published.entries; renderMoments(document.querySelector('#moments-grid'),published.moments);  if (published.favourites) for (const key of ['music','joy','dream']) document.getElementById(key).textContent = published.favourites[key]; }
       catch {
+        document.querySelector('#moments-status').textContent='Moments could not load. Please refresh.';
         const notice = document.createElement('p');
         notice.textContent = 'New diary entries could not load. Please try again later.';
         list.before(notice);
