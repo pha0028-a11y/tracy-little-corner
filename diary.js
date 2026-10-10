@@ -15,7 +15,7 @@
   const clearDraft=()=>{try{localStorage.removeItem(draftKey);}catch{}};
   const reset=()=>{form.reset();dateInput.value=today();editingId=null;cancel.hidden=true;save.textContent='Save today’s thought ↗';clearDraft();};
   function render(){
-    list.replaceChildren();document.querySelector('#entry-count').textContent=entries.length+' '+(entries.length===1?'entry':'entries');
+    list.replaceChildren();
     if(!entries.length)return;
     const sorted=[...entries].sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt.localeCompare(a.createdAt));
     for(const entry of sorted){
