@@ -1,4 +1,4 @@
-import { loadDiary } from './diary-feed.js?v=1';
+import { loadPublished } from './diary-feed.js?v=2';
 (() => {
   const list = document.querySelector('#diary-entries');
   fetch('updates.json', { cache: 'no-store' })
@@ -14,7 +14,7 @@ import { loadDiary } from './diary-feed.js?v=1';
       }
       if (!Array.isArray(data.entries)) throw new Error('Invalid entries');
       let online = [];
-      try { online = await loadDiary(); }
+      try { const published = await loadPublished(); online = published.entries; if (published.favourites) for (const key of ['music','joy','dream']) document.getElementById(key).textContent = published.favourites[key]; }
       catch {
         const notice = document.createElement('p');
         notice.textContent = 'New diary entries could not load. Please try again later.';
