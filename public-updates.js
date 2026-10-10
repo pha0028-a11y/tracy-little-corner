@@ -1,3 +1,4 @@
+import { loadDiary } from './diary-feed.js?v=1';
 (() => {
   const list = document.querySelector('#diary-entries');
   fetch('updates.json', { cache: 'no-store' })
@@ -5,14 +6,21 @@
       if (!response.ok) throw new Error('Updates unavailable');
       return response.json();
     })
-    .then(data => {
+    .then(async data => {
       for (const key of ['music', 'joy', 'dream']) {
         if (typeof data.favourites?.[key] === 'string') {
           document.getElementById(key).textContent = data.favourites[key];
         }
       }
       if (!Array.isArray(data.entries)) throw new Error('Invalid entries');
-      const entries = data.entries.filter(entry => entry &&
+      let online = [];
+      try { online = await loadDiary(); }
+      catch {
+        const notice = document.createElement('p');
+        notice.textContent = 'New diary entries could not load. Please try again later.';
+        list.before(notice);
+      }
+      const entries = [...data.entries, ...online].filter(entry => entry &&
         /^\d{4}-\d{2}-\d{2}$/.test(entry.date) &&
         typeof entry.title === 'string' && typeof entry.body === 'string');
       entries.sort((a, b) => b.date.localeCompare(a.date));
