@@ -55,6 +55,6 @@
     const data={format:'tracy-diary',version:1,entries,draft:{date:dateInput.value,title:titleInput.value,body:note.value,editingId},exportedAt:new Date().toISOString()};
     const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
     const link=document.createElement('a');link.href=url;link.download='tracy-diary-'+today()+'.json';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
-    status.textContent='Diary backup downloaded. Keep it somewhere safe.';
+    status.textContent='';
   });
 })();
