@@ -1,4 +1,5 @@
-import { loadPublished, makePost, postURL } from './diary-feed.js?v=2';
+import { renderMoments } from './moments.js?v=1';
+import { loadPublished, makePost, makeMoment, postURL } from './diary-feed.js?v=3';
 const form=document.querySelector('#note-form'),note=document.querySelector('#note'),date=document.querySelector('#entry-date'),title=document.querySelector('#entry-title'),status=document.querySelector('#save-status'),list=document.querySelector('#diary-entries');
 const dialog=document.querySelector('#edit-dialog');
 let activeKey='',entries=[],favourites={},ready=false;
@@ -28,10 +29,20 @@ document.querySelector('#export-diary').addEventListener('click',()=>{const data
 async function refresh(){
   try{
     const base=await fetch('updates.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error();return r.json()});
-    const published=await loadPublished();favourites=published.favourites||base.favourites;entries=[...(base.entries||[]),...published.entries].sort((a,b)=>b.date.localeCompare(a.date));
+    const published=await loadPublished();renderMoments(document.querySelector('#moments-grid'),published.moments,true);favourites=published.favourites||base.favourites;entries=[...(base.entries||[]),...published.entries].sort((a,b)=>b.date.localeCompare(a.date));
     for(const key of ['music','joy','dream']){if(typeof favourites[key]==='string')document.getElementById(key).textContent=favourites[key];}
     ready=true;list.replaceChildren();
     for(const entry of entries){const page=document.createElement('article');page.className='diary-page';const time=document.createElement('time');time.dateTime=entry.date;time.textContent=new Date(entry.date+'T12:00:00').toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'});const heading=document.createElement('h4');heading.textContent=entry.title||'A little thought';const body=document.createElement('p');body.textContent=entry.body;page.append(time,heading,body);if(entry.url){const edit=document.createElement('a');edit.className='edit';edit.href=entry.url;edit.target='_blank';edit.rel='noopener';edit.textContent='Edit this page ↗';page.append(edit);}list.append(page);}
-  }catch{status.textContent='Published updates could not load. Please refresh before posting.';}
+  }catch{document.querySelector('#moments-status').textContent='Moments could not load. Please refresh.';status.textContent='Published updates could not load. Please refresh before posting.';}
 }
 window.addEventListener('focus',refresh);refresh();
+
+const momentDate=document.querySelector('#moment-date'),momentStatus=document.querySelector('#moments-status');
+momentDate.value=today();
+document.querySelector('#moment-form').addEventListener('submit',event=>{
+  event.preventDefault();
+  if(!ready){momentStatus.textContent='Please wait for published updates to load before posting.';return;}
+  const post=makeMoment(momentDate.value,document.querySelector('#moment-title').value);
+  window.open(postURL(post),'_blank','noopener');
+  momentStatus.textContent='Add your photos in the GitHub description, wait for uploads to finish, then create the issue as pha0028-a11y. Return here to see them.';
+});
