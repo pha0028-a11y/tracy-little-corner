@@ -1,9 +1,11 @@
-# A little about me
+# Tracy’s little corner
 
-A personal website with a browser-local diary.
+Public, view-only personal website. Only repository owners and collaborators can publish changes.
 
-## Publish with GitHub Pages
+## Publish an update
 
-Upload these files to the root of a repository. Under Settings → Pages, select Deploy from a branch, main, and / (root).
+Edit `updates.json` using your signed-in GitHub account, or ask Codex to publish your chosen favourites and diary entries. Commits on main deploy automatically.
 
-Diary entries and favourite edits are stored in the visitor’s browser on that device. They are not committed to GitHub or synced.
+`favourites` contains `music`, `joy`, and `dream`. Each item in `entries` contains `date` (YYYY-MM-DD), `title`, and `body`. Entries in this file are public. Private browser diary data is never automatically copied into this file.
+
+The public page does not read browser-local diary data or provide editing controls. Existing browser data is retained.
