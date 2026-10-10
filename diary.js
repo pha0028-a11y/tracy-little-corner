@@ -16,7 +16,7 @@
   const reset=()=>{form.reset();dateInput.value=today();editingId=null;cancel.hidden=true;save.textContent='Save today’s thought ↗';clearDraft();};
   function render(){
     list.replaceChildren();document.querySelector('#entry-count').textContent=entries.length+' '+(entries.length===1?'entry':'entries');
-    if(!entries.length){const empty=document.createElement('p');empty.className='empty-diary';empty.textContent='Your first page is waiting. Write a little thought above to begin.';list.append(empty);return;}
+    if(!entries.length)return;
     const sorted=[...entries].sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt.localeCompare(a.createdAt));
     for(const entry of sorted){
       const page=document.createElement('article');page.className='diary-page';
